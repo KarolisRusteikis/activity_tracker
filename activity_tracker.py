@@ -50,8 +50,7 @@ def update_activity_window(activity):
         [sg.Text("Date:"), sg.Input(default_text=activity['date'], key='date'), sg.CalendarButton("Choose Date", target='date', key='date_btn', format='%Y-%m-%d')],
         [sg.Text("Time:"), sg.Combo([f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in range(0, 60, 15)], default_value=activity['time'], key='time')],
         [sg.Text("Duration (minutes):"), sg.InputText(activity['duration'], key='duration')],
-        [sg.Text("Comments:"), sg.Multiline(default_text=comments_str, size=(35, 3), disabled=True, key='comments_display')],
-        [sg.Text("Add Comment:"), sg.InputText(key='new_comment')],
+        [sg.Text("Comments:"), sg.Multiline(default_text=comments_str, size=(35, 3), key='comments_display')],
         [sg.Button("Save"), sg.Button("Cancel")]
     ]
     return sg.Window("Update Activity", layout, finalize=True)
@@ -102,7 +101,7 @@ window['activities_list'].update(values=[format_activity_for_display(act) for ac
 
 while True:
     event, values = window.read()
-
+    
     if event == sg.WIN_CLOSED:
         break
     elif event == 'Add New Activity':
@@ -113,51 +112,43 @@ while True:
                 add_window.close()
                 break
             elif event == 'Save':
-                if 'time' in values:
-                    new_activity = {
-                        'name': values['name'],
-                        'date': values['date'],
-                        'time': values['time'],
-                        'duration': values['duration'],
-                        'comments': []
-                    }
-                    activities.append(new_activity)
-                    save_activities(activities)
-                    add_window.close()
-                    sorted_activities = get_sorted_activities(activities, last_sort_key, last_sort_order)
-                    window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_activities])
-                    break
+                new_activity = {
+                    'name': values['name'],
+                    'date': values['date'],
+                    'time': values['time'],
+                    'duration': values['duration'],
+                    'comments': []
+                }
+                activities.append(new_activity)
+                save_activities(activities)
+                add_window.close()
+                sorted_activities = get_sorted_activities(activities, last_sort_key, last_sort_order)
+                window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_activities])
+                break
     elif event == 'Remove Selected Activity' and values['activities_list']:
-        selected_activity_info = next((act for act in activities if format_activity_for_display(act) == values['activities_list'][0]), None)
-        if selected_activity_info and sg.popup_yes_no('Are you sure you want to remove the selected activity?') == 'Yes':
-            activities.remove(selected_activity_info)
+        selected_activity = next((act for act in activities if format_activity_for_display(act) == values['activities_list'][0]), None)
+        if selected_activity and sg.popup_yes_no('Are you sure you want to remove the selected activity?') == 'Yes':
+            activities.remove(selected_activity)
             save_activities(activities)
-            sorted_activities = get_sorted_activities(activities, last_sort_key, last_sort_order)
-            window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_activities])
+            window['activities_list'].update(values=[format_activity_for_display(act) for act in get_sorted_activities(activities, last_sort_key, last_sort_order)])
     elif event == 'Update Selected Activity' and values['activities_list']:
-        selected_activity_info = next((act for act in activities if format_activity_for_display(act) == values['activities_list'][0]), None)
-        if selected_activity_info:
-            update_window = update_activity_window(selected_activity_info)
+        selected_activity = next((act for act in activities if format_activity_for_display(act) == values['activities_list'][0]), None)
+        if selected_activity:
+            update_window = update_activity_window(selected_activity)
             while True:
                 event, values = update_window.read()
                 if event in (sg.WIN_CLOSED, 'Cancel'):
                     update_window.close()
                     break
                 elif event == 'Save':
-                    updated_comments = selected_activity_info.get('comments', [])
-                    new_comment = values['new_comment'].strip()
-                    if new_comment:
-                        updated_comments.append(new_comment)
-                    
-                    updated_activity = {
+                    edited_comments = values['comments_display'].strip().split('\n')
+                    selected_activity.update({
                         'name': values['name'],
                         'date': values['date'],
                         'time': values['time'],
                         'duration': values['duration'],
-                        'comments': updated_comments
-                    }
-                    index = activities.index(selected_activity_info)
-                    activities[index] = updated_activity
+                        'comments': edited_comments
+                    })
                     save_activities(activities)
                     update_window.close()
                     sorted_activities = get_sorted_activities(activities, last_sort_key, last_sort_order)
@@ -174,4 +165,3 @@ while True:
         window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_activities])
 
 window.close()
-
