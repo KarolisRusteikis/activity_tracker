@@ -36,7 +36,7 @@ def format_activity_for_display(activity):
 def add_activity_window():
     layout = [
         [sg.Text("Name of Activity:"), sg.InputText(key='name')],
-        [sg.Text("Date:"), sg.Input(key='date', enable_events=True), sg.CalendarButton("Choose Date", target='date', key='date_btn', format='%Y-%m-%d')],
+        [sg.Text("Date:"), sg.Input(key='date'), sg.CalendarButton("Choose Date", target='date', key='date_btn', format='%Y-%m-%d')],
         [sg.Text("Time:"), sg.Combo([f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in range(0, 60, 15)], key='time')],
         [sg.Text("Duration (minutes):"), sg.InputText(key='duration')],
         [sg.Button("Save"), sg.Button("Cancel")]
@@ -44,15 +44,17 @@ def add_activity_window():
     return sg.Window("Add New Activity", layout, finalize=True)
 
 def update_activity_window(activity):
+    comments_str = '\n'.join(activity.get('comments', []))
     layout = [
         [sg.Text("Name of Activity:"), sg.InputText(activity['name'], key='name')],
-        [sg.Text("Date:"), sg.Input(default_text=activity['date'], key='date', enable_events=True), sg.CalendarButton("Choose Date", target='date', key='date_btn', format='%Y-%m-%d')],
+        [sg.Text("Date:"), sg.Input(default_text=activity['date'], key='date'), sg.CalendarButton("Choose Date", target='date', key='date_btn', format='%Y-%m-%d')],
         [sg.Text("Time:"), sg.Combo([f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in range(0, 60, 15)], default_value=activity['time'], key='time')],
         [sg.Text("Duration (minutes):"), sg.InputText(activity['duration'], key='duration')],
+        [sg.Text("Comments:"), sg.Multiline(default_text=comments_str, size=(35, 3), disabled=True, key='comments_display')],
+        [sg.Text("Add Comment:"), sg.InputText(key='new_comment')],
         [sg.Button("Save"), sg.Button("Cancel")]
     ]
     return sg.Window("Update Activity", layout, finalize=True)
-
 
 def get_sorted_activities(activities, sort_key, reverse=False):
     try:
@@ -94,14 +96,9 @@ def create_main_window():
     ]
     return sg.Window("Activity Tracker", layout, finalize=True)
 
-
-
-
 window = create_main_window()
 activities = load_activities()
 window['activities_list'].update(values=[format_activity_for_display(act) for act in get_sorted_activities(activities, 'name')])
-
-
 
 while True:
     event, values = window.read()
@@ -121,7 +118,8 @@ while True:
                         'name': values['name'],
                         'date': values['date'],
                         'time': values['time'],
-                        'duration': values['duration']
+                        'duration': values['duration'],
+                        'comments': []
                     }
                     activities.append(new_activity)
                     save_activities(activities)
@@ -146,11 +144,17 @@ while True:
                     update_window.close()
                     break
                 elif event == 'Save':
+                    updated_comments = selected_activity_info.get('comments', [])
+                    new_comment = values['new_comment'].strip()
+                    if new_comment:
+                        updated_comments.append(new_comment)
+                    
                     updated_activity = {
                         'name': values['name'],
                         'date': values['date'],
                         'time': values['time'],
-                        'duration': values['duration']
+                        'duration': values['duration'],
+                        'comments': updated_comments
                     }
                     index = activities.index(selected_activity_info)
                     activities[index] = updated_activity
@@ -161,10 +165,7 @@ while True:
                     break
     elif event == 'Search':
         search_term = values['search_input']
-        if search_term.strip() == "":
-            filtered_activities = activities
-        else:
-            filtered_activities = search_activities(activities, search_term, last_sort_key, last_sort_order)
+        filtered_activities = search_activities(activities, search_term, last_sort_key, last_sort_order)
         sorted_filtered_activities = get_sorted_activities(filtered_activities, last_sort_key, last_sort_order)
         window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_filtered_activities])
     elif event == 'refresh_main':
@@ -173,3 +174,4 @@ while True:
         window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_activities])
 
 window.close()
+

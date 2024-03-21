@@ -3,19 +3,28 @@
         "name": "Yoga",
         "date": "2024-03-20",
         "time": "14:25",
-        "duration": "30"
+        "duration": "30",
+        "comments": [
+            "Strained my back a little during weighlifting workout, so i stretched a little to relieve the pain"
+        ]
     },
     {
         "name": "Eating",
         "date": "2024-03-25",
         "time": "20:00",
-        "duration": "25"
+        "duration": "24",
+        "comments": [
+            "Ate 4 boiled eggs with an avocado"
+        ]
     },
     {
         "name": "Sleep",
         "date": "2024-03-20",
         "time": "00:00",
-        "duration": "420"
+        "duration": "420",
+        "comments": [
+            "Had a really good night sleep, with almost 1hour of deep sleep"
+        ]
     },
     {
         "name": "Walking",
