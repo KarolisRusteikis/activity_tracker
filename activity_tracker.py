@@ -1,9 +1,52 @@
 import PySimpleGUI as sg
 import json
 from datetime import datetime
+from PIL import Image, ImageTk
+from PIL import Image, ImageOps
+import io
+import base64
+import os
+import tempfile
+
 
 last_sort_key = 'name'
 last_sort_order = False
+update_window = None
+add_window = None
+
+def resize_image(image, max_size=(200, 200)):
+    try:
+        resample = Image.Resampling.LANCZOS
+    except AttributeError:
+        resample = Image.ANTIALIAS
+    
+    image.thumbnail(max_size, resample)
+    new_image = Image.new("RGB", max_size, (255, 255, 255))
+    padding = (int((max_size[0] - image.size[0]) / 2), int((max_size[1] - image.size[1]) / 2))
+    new_image.paste(image, padding)
+    
+    return new_image
+
+def update_image(window, path, key):
+    try:
+        if not os.path.exists(path):
+            sg.popup_error(f"File does not exist: {path}")
+            return
+
+        with Image.open(path) as img:
+            img = resize_image(img, max_size=(200, 200))
+
+            with io.BytesIO() as output:
+                img.save(output, format='PNG')
+                data = output.getvalue()
+
+            photo_image = ImageTk.PhotoImage(data=data)
+
+            window[key].update(data=photo_image)
+            window[key].metadata = photo_image
+
+    except Exception as e:
+        sg.popup_error("Failed to load and display image", str(e))
 
 def ensure_db_exists(filename="activities.json"):
     try:
@@ -31,7 +74,9 @@ def format_activity_for_display(activity):
     date = "{:<10}".format(activity['date'])
     time = "{:<5}".format(activity['time'])
     duration = "{:>3} min".format(activity['duration'])
-    return f"{name} {date} {time} {duration}"
+    photo_indicator = "[Photo]" if activity.get('photo') else ""
+    return f"{name} {date} {time} {duration} {photo_indicator}"
+
 
 def add_activity_window():
     layout = [
@@ -39,6 +84,7 @@ def add_activity_window():
         [sg.Text("Date:", font=("Helvetica", 10)), sg.Input(key='date'), sg.CalendarButton("Choose Date", target='date', key='date_btn', format='%Y-%m-%d')],
         [sg.Text("Time:", font=("Helvetica", 10)), sg.Combo([f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in range(0, 60, 15)], key='time')],
         [sg.Text("Duration (minutes):", font=("Helvetica", 10)), sg.InputText(key='duration')],
+        [sg.Text("Photo:", font=("Helvetica", 10)), sg.InputText(enable_events=True, key='photo_path'), sg.FileBrowse(target='photo_path'), sg.Image(key='photo_preview')],
         [sg.Button("Save"), sg.Button("Cancel")]
     ]
     return sg.Window("Add New Activity", layout, finalize=True)
@@ -51,9 +97,11 @@ def update_activity_window(activity):
         [sg.Text("Time:"), sg.Combo([f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in range(0, 60, 15)], default_value=activity['time'], key='time')],
         [sg.Text("Duration (minutes):"), sg.InputText(activity['duration'], key='duration')],
         [sg.Text("Comments:"), sg.Multiline(default_text=comments_str, size=(35, 3), key='comments_display')],
+        [sg.Text("Photo:", font=("Helvetica", 10)), sg.InputText(default_text=activity.get('photo', ''), enable_events=True, key='photo_path'), sg.FileBrowse(target='photo_path'), sg.Image(filename=activity.get('photo', ''), key='photo_preview')],
         [sg.Button("Save"), sg.Button("Cancel")]
     ]
     return sg.Window("Update Activity", layout, finalize=True)
+
 
 def get_sorted_activities(activities, sort_key, reverse=False):
     try:
@@ -101,15 +149,18 @@ window['activities_list'].update(values=[format_activity_for_display(act) for ac
 
 while True:
     event, values = window.read()
-    
+
     if event == sg.WIN_CLOSED:
         break
     elif event == 'Add New Activity':
-        add_window = add_activity_window()
+        if not add_window:
+            add_window = add_activity_window()
         while True:
             event, values = add_window.read()
+
             if event in (sg.WIN_CLOSED, 'Cancel'):
                 add_window.close()
+                add_window = None
                 break
             elif event == 'Save':
                 new_activity = {
@@ -117,28 +168,30 @@ while True:
                     'date': values['date'],
                     'time': values['time'],
                     'duration': values['duration'],
-                    'comments': []
+                    'comments': [],
+                    'photo': values['photo_path']
                 }
                 activities.append(new_activity)
                 save_activities(activities)
                 add_window.close()
+                add_window = None
                 sorted_activities = get_sorted_activities(activities, last_sort_key, last_sort_order)
                 window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_activities])
                 break
-    elif event == 'Remove Selected Activity' and values['activities_list']:
-        selected_activity = next((act for act in activities if format_activity_for_display(act) == values['activities_list'][0]), None)
-        if selected_activity and sg.popup_yes_no('Are you sure you want to remove the selected activity?') == 'Yes':
-            activities.remove(selected_activity)
-            save_activities(activities)
-            window['activities_list'].update(values=[format_activity_for_display(act) for act in get_sorted_activities(activities, last_sort_key, last_sort_order)])
+            elif event == 'photo_path':
+                update_image(add_window if add_window else update_window, values['photo_path'], 'photo_preview')
+
+
     elif event == 'Update Selected Activity' and values['activities_list']:
         selected_activity = next((act for act in activities if format_activity_for_display(act) == values['activities_list'][0]), None)
         if selected_activity:
-            update_window = update_activity_window(selected_activity)
+            if not update_window:
+                update_window = update_activity_window(selected_activity)
             while True:
                 event, values = update_window.read()
                 if event in (sg.WIN_CLOSED, 'Cancel'):
                     update_window.close()
+                    update_window = None
                     break
                 elif event == 'Save':
                     edited_comments = values['comments_display'].strip().split('\n')
@@ -147,21 +200,21 @@ while True:
                         'date': values['date'],
                         'time': values['time'],
                         'duration': values['duration'],
-                        'comments': edited_comments
+                        'comments': edited_comments,
+                        'photo': values['photo_path']
                     })
                     save_activities(activities)
                     update_window.close()
+                    update_window = None
                     sorted_activities = get_sorted_activities(activities, last_sort_key, last_sort_order)
                     window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_activities])
                     break
-    elif event == 'Search':
-        search_term = values['search_input']
-        filtered_activities = search_activities(activities, search_term, last_sort_key, last_sort_order)
-        sorted_filtered_activities = get_sorted_activities(filtered_activities, last_sort_key, last_sort_order)
-        window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_filtered_activities])
-    elif event == 'refresh_main':
-        last_sort_key = values['sort_combo'].lower()
-        sorted_activities = get_sorted_activities(activities, last_sort_key, last_sort_order)
-        window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_activities])
+                elif event == 'photo_path':
+                    update_image(add_window if add_window else update_window, values['photo_path'], 'photo_preview')
+
+if add_window:
+    add_window.close()
+if update_window:
+    update_window.close()
 
 window.close()

@@ -15,7 +15,8 @@
         "duration": "24",
         "comments": [
             "Ate 4 boiled eggs with an avocado"
-        ]
+        ],
+        "photo": "C:/Users/37067/Desktop/coffee.png"
     },
     {
         "name": "Sleep",
@@ -42,7 +43,11 @@
         "name": "Eating",
         "date": "2024-03-12",
         "time": "12:00",
-        "duration": "30"
+        "duration": "30",
+        "comments": [
+            ""
+        ],
+        "photo": ""
     },
     {
         "name": "Lifting",
@@ -51,7 +56,8 @@
         "duration": "30",
         "comments": [
             "Done some dumbell curls and shoulder presses."
-        ]
+        ],
+        "photo": ""
     },
     {
         "name": "Coffee",
@@ -60,7 +66,9 @@
         "duration": "10",
         "comments": [
             "Drank new Nicaragua espresso."
-        ]
+        ],
+        "photo_path": "C:/Users/37067/Desktop/Karolis Rusteikis (@alxemikas) \u2022 Instagram photos and videos_files/162032116_881588575908944_2155138355201252805_n.jpg",
+        "photo": "C:/Users/37067/Desktop/coffee.png"
     },
     {
         "name": "Family time",
