@@ -35,10 +35,10 @@ def format_activity_for_display(activity):
 
 def add_activity_window():
     layout = [
-        [sg.Text("Name of Activity:"), sg.InputText(key='name')],
-        [sg.Text("Date:"), sg.Input(key='date'), sg.CalendarButton("Choose Date", target='date', key='date_btn', format='%Y-%m-%d')],
-        [sg.Text("Time:"), sg.Combo([f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in range(0, 60, 15)], key='time')],
-        [sg.Text("Duration (minutes):"), sg.InputText(key='duration')],
+        [sg.Text("Name of Activity:", font=("Helvetica", 10)), sg.InputText(key='name')],
+        [sg.Text("Date:", font=("Helvetica", 10)), sg.Input(key='date'), sg.CalendarButton("Choose Date", target='date', key='date_btn', format='%Y-%m-%d')],
+        [sg.Text("Time:", font=("Helvetica", 10)), sg.Combo([f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in range(0, 60, 15)], key='time')],
+        [sg.Text("Duration (minutes):", font=("Helvetica", 10)), sg.InputText(key='duration')],
         [sg.Button("Save"), sg.Button("Cancel")]
     ]
     return sg.Window("Add New Activity", layout, finalize=True)
@@ -79,18 +79,18 @@ def create_main_window():
     layout = [
         [sg.Text("ACTIVITY TRACKER v1.3", size=(30, 1), font=("Helvetica", 25))],
         [
-            sg.Button("Add New Activity"),
-            sg.Button("Remove Selected Activity"),
-            sg.Button("Update Selected Activity")
+            sg.Button("Add New Activity", font=("Helvetica", 10)),
+            sg.Button("Remove Selected Activity", font=("Helvetica", 10)),
+            sg.Button("Update Selected Activity", font=("Helvetica", 10))
         ],
         [
-            sg.Text('Sort by'), sg.Combo(sort_keys, default_value=sort_keys[0], key='sort_combo'),
-            sg.Button('Refresh', key='refresh_main')
+            sg.Text('Sort by', font=("Helvetica", 10)), sg.Combo(sort_keys, default_value=sort_keys[0], key='sort_combo', font=("Helvetica", 10)),
+            sg.Button('Refresh', key='refresh_main', font=("Helvetica", 10))
         ],
         [sg.Listbox(values=[], size=(70, 10), font=('Courier New', 10), key='activities_list')],
         [
-            sg.Text('Search for an activity'), sg.InputText(key='search_input'),
-            sg.Button('Search')
+            sg.Text('Search for an activity', font=("Helvetica", 10)), sg.InputText(key='search_input'),
+            sg.Button('Search', font=("Helvetica", 10))
         ]
     ]
     return sg.Window("Activity Tracker", layout, finalize=True)

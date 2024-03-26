@@ -43,5 +43,32 @@
         "date": "2024-03-12",
         "time": "12:00",
         "duration": "30"
+    },
+    {
+        "name": "Lifting",
+        "date": "2024-03-25",
+        "time": "09:00",
+        "duration": "30",
+        "comments": [
+            "Done some dumbell curls and shoulder presses."
+        ]
+    },
+    {
+        "name": "Coffee",
+        "date": "2024-03-25",
+        "time": "08:30",
+        "duration": "10",
+        "comments": [
+            "Drank new Nicaragua espresso."
+        ]
+    },
+    {
+        "name": "Family time",
+        "date": "2024-03-16",
+        "time": "19:00",
+        "duration": "180",
+        "comments": [
+            "Went to Hierboles' 50th anniversary concert in Klaipeda with mom and sister."
+        ]
     }
 ]
