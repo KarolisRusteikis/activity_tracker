@@ -16,7 +16,7 @@
         "comments": [
             "Ate 4 boiled eggs with an avocado"
         ],
-        "photo": "C:/Users/37067/Desktop/coffee.png"
+        "photo": ""
     },
     {
         "name": "Sleep",
@@ -68,7 +68,7 @@
             "Drank new Ethiopian espresso."
         ],
         "photo_path": "C:/Users/37067/Desktop/Karolis Rusteikis (@alxemikas) \u2022 Instagram photos and videos_files/162032116_881588575908944_2155138355201252805_n.jpg",
-        "photo": "C:/Users/37067/Desktop/coffee.png"
+        "photo": "C:/CodeAcademy/activity_tracker/photos/coffee.png"
     },
     {
         "name": "Family time",
@@ -78,5 +78,15 @@
         "comments": [
             "Went to Hierboles' 50th anniversary concert in Klaipeda with mom and sister."
         ]
+    },
+    {
+        "name": "Hiking",
+        "date": "2024-03-28",
+        "time": "07:45",
+        "duration": "120",
+        "comments": [
+            ""
+        ],
+        "photo": "C:/CodeAcademy/activity_tracker/photos/hiking.png"
     }
 ]

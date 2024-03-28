@@ -33,21 +33,19 @@ def update_image(window, path, key):
         if not os.path.exists(path):
             sg.popup_error(f"File does not exist: {path}")
             return
+        
+        img = Image.open(path)
+        img.verify()
+        img.close()
+        
+        img = Image.open(path)
+        img = resize_image(img, max_size=(200, 200))
 
-        with Image.open(path) as img:
-            img = resize_image(img, max_size=(200, 200))
-
-            with io.BytesIO() as output:
-                img.save(output, format='PNG')
-                data = output.getvalue()
-
-            photo_image = ImageTk.PhotoImage(data=data)
-
-            window[key].update(data=photo_image)
-            window[key].metadata = photo_image
-
+    except IOError as e:
+        sg.popup_error("IOError: Failed to load image. Make sure the image file is not corrupted and is in a supported format.", str(e))
     except Exception as e:
-        sg.popup_error("Failed to load and display image", str(e))
+        sg.popup_error("An unexpected error occurred while loading the image", str(e))
+
 
 def ensure_db_exists(filename="activities.json"):
     try:
@@ -85,7 +83,8 @@ def add_activity_window():
         [sg.Text("Date:", font=("Helvetica", 10)), sg.Input(key='date'), sg.CalendarButton("Choose Date", target='date', key='date_btn', format='%Y-%m-%d')],
         [sg.Text("Time:", font=("Helvetica", 10)), sg.Combo([f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in range(0, 60, 15)], key='time')],
         [sg.Text("Duration (minutes):", font=("Helvetica", 10)), sg.InputText(key='duration')],
-        [sg.Text("Photo:", font=("Helvetica", 10)), sg.InputText(enable_events=True, key='photo_path'), sg.FileBrowse(target='photo_path'), sg.Image(key='photo_preview')],
+        [sg.Text("Photo:", font=("Helvetica", 10)), sg.InputText(enable_events=True, key='photo_path'), sg.FileBrowse(target='photo_path')], 
+        [sg.Image(key='photo_preview')],
         [sg.Button("Save"), sg.Button("Cancel")]
     ]
     return sg.Window("Add New Activity", layout, finalize=True)
@@ -98,7 +97,9 @@ def update_activity_window(activity):
         [sg.Text("Time:"), sg.Combo([f"{hour:02d}:{minute:02d}" for hour in range(24) for minute in range(0, 60, 15)], default_value=activity['time'], key='time')],
         [sg.Text("Duration (minutes):"), sg.InputText(activity['duration'], key='duration')],
         [sg.Text("Comments:"), sg.Multiline(default_text=comments_str, size=(35, 3), key='comments_display')],
-        [sg.Text("Photo:", font=("Helvetica", 10)), sg.InputText(default_text=activity.get('photo', ''), enable_events=True, key='photo_path'), sg.FileBrowse(target='photo_path'), sg.Image(filename=activity.get('photo', ''), key='photo_preview')],
+        [sg.Text("Photo:", font=("Helvetica", 10))], 
+        [sg.InputText(default_text=activity.get('photo', ''), enable_events=True, key='photo_path'), sg.FileBrowse(target='photo_path')], 
+        [sg.Image(filename=activity.get('photo', ''), key='photo_preview')],
         [sg.Button("Save"), sg.Button("Cancel")]
     ]
     return sg.Window("Update Activity", layout, finalize=True)
@@ -211,6 +212,18 @@ while True:
                     break
                 elif event == 'photo_path':
                     update_image(add_window if add_window else update_window, values['photo_path'], 'photo_preview')
+
+    elif event == 'Remove Selected Activity':
+        selected_activity_display = values['activities_list'][0] if values['activities_list'] else None
+        if selected_activity_display:
+            for activity in activities:
+                if format_activity_for_display(activity) == selected_activity_display:
+                    activities.remove(activity)
+                    save_activities(activities)
+                    break
+            
+            sorted_activities = get_sorted_activities(activities, last_sort_key, last_sort_order)
+            window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_activities])
 
     elif event == 'Search':
         search_term = values['search_input']
