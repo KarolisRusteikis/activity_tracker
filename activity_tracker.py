@@ -13,6 +13,7 @@ last_sort_key = 'name'
 last_sort_order = False
 update_window = None
 add_window = None
+sort_key_map = {'Name': 'name', 'Date': 'date', 'Duration': 'duration'}
 
 def resize_image(image, max_size=(200, 200)):
     try:
@@ -132,8 +133,7 @@ def create_main_window():
             sg.Button("Update Selected Activity", font=("Helvetica", 10))
         ],
         [
-            sg.Text('Sort by', font=("Helvetica", 10)), sg.Combo(sort_keys, default_value=sort_keys[0], key='sort_combo', font=("Helvetica", 10)),
-            sg.Button('Refresh', key='refresh_main', font=("Helvetica", 10))
+            sg.Text('Sort by', font=("Helvetica", 10)), sg.Combo(sort_keys, default_value=sort_keys[0], key='sort_combo', font=("Helvetica", 10))
         ],
         [sg.Listbox(values=[], size=(70, 10), font=('Courier New', 10), key='activities_list')],
         [
@@ -211,6 +211,18 @@ while True:
                     break
                 elif event == 'photo_path':
                     update_image(add_window if add_window else update_window, values['photo_path'], 'photo_preview')
+
+    elif event == 'Search':
+        search_term = values['search_input']
+        selected_sort_key_gui = values['sort_combo']
+        programmatic_sort_key = sort_key_map[selected_sort_key_gui]
+        filtered_and_sorted_activities = search_activities(activities, search_term, programmatic_sort_key, last_sort_order)
+        window['activities_list'].update(values=[format_activity_for_display(act) for act in filtered_and_sorted_activities])
+    elif event == 'Refresh':
+        selected_sort_key_gui = values['sort_combo']
+        programmatic_sort_key = sort_key_map[selected_sort_key_gui]
+        sorted_activities = get_sorted_activities(activities, programmatic_sort_key, last_sort_order)
+        window['activities_list'].update(values=[format_activity_for_display(act) for act in sorted_activities])
 
 if add_window:
     add_window.close()
